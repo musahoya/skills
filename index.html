@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Skills 제작 도우미</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            flex: 1;
+            min-width: 200px;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 10px 10px 0 0;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .tab-button:hover {
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active {
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 0 10px 10px 10px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .agent-section {
+            margin-bottom: 30px;
+        }
+
+        .agent-section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .agent-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+
+        .info-box p {
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+            resize: vertical;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            display: none;
+        }
+
+        .result-box.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-box h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .score {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .score.good {
+            color: #22c55e;
+        }
+
+        .score.warning {
+            color: #f59e0b;
+        }
+
+        .score.bad {
+            color: #ef4444;
+        }
+
+        .feedback-item {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: flex;
+            align-items: start;
+        }
+
+        .feedback-item.good {
+            background: #dcfce7;
+            border-left: 4px solid #22c55e;
+        }
+
+        .feedback-item.warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .feedback-item.bad {
+            background: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
+
+        .feedback-item .icon {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .examples {
+            margin-top: 20px;
+        }
+
+        .example-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .example-item h5 {
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .example-item p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab-button {
+                min-width: 100%;
+            }
+        }
+
+        .suggestion-box {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 2px solid #667eea;
+        }
+
+        .suggestion-box h5 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .copy-button {
+            background: #22c55e;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-button:hover {
+            background: #16a34a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Claude Skills 제작 도우미</h1>
+            <p>Description 판단, Instructions 작성, 검증까지 - AI 에이전트가 도와드립니다</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab(0)">
+                📝 Description 판단
+            </button>
+            <button class="tab-button" onclick="switchTab(1)">
+                ✍️ Instructions 작성
+            </button>
+            <button class="tab-button" onclick="switchTab(2)">
+                ✅ 최종 검증
+            </button>
+        </div>
+
+        <!-- Tab 1: Description 판단 -->
+        <div class="tab-content active" id="tab1">
+            <div class="agent-section">
+                <h2>📝 Description 판단 에이전트</h2>
+
+                <div class="info-box">
+                    <p><strong>이 에이전트는 무엇을 하나요?</strong></p>
+                    <p>작성하신 스킬 description이 구체적이고 명확한지 분석합니다. Claude가 언제 이 스킬을 사용해야 하는지 정확히 판단할 수 있는지 평가하고, 개선 방향을 제시합니다.</p>
+                </div>
+
+                <div class="input-group">
+                    <label for="desc-input">작성하신 Description을 입력해주세요:</label>
+                    <textarea id="desc-input" rows="5" placeholder="예: 팀의 주간 업무 현황을 '진행 중', '완료', '이슈' 세 가지 항목으로 구분하여 지정된 형식의 보고서를 작성합니다."></textarea>
+                </div>
+
+                <button class="button" onclick="analyzeDescription()">판단하기</button>
+
+                <div class="result-box" id="desc-result">
+                    <h4>분석 결과</h4>
+                    <div id="desc-score"></div>
+                    <div id="desc-feedback"></div>
+                    <div id="desc-suggestions"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Instructions 작성 도우미 -->
+        <div class="tab-content" id="tab2">
+            <div class="agent-section">
+                <h2>✍️ Instructions 작성 도우미 에이전트</h2>
+
+                <div class="info-box">
+                    <p><strong>이 에이전트는 무엇을 하나요?</strong></p>
+                    <p>스킬의 핵심인 상세 지침(Instructions)을 체계적으로 작성할 수 있도록 도와드립니다. 업무 내용을 입력하시면, 구조화된 Instructions 초안을 자동으로 생성해드립니다.</p>
+                </div>
+
+                <div class="input-group">
+                    <label for="skill-name">스킬 이름:</label>
+                    <input type="text" id="skill-name" placeholder="예: 주간 업무 보고서 작성">
+                </div>
+
+                <div class="input-group">
+                    <label for="skill-purpose">스킬의 목적:</label>
+                    <textarea id="skill-purpose" rows="3" placeholder="이 스킬이 해결하려는 문제나 달성하려는 목표를 설명해주세요."></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="skill-input">입력 정보:</label>
+                    <textarea id="skill-input" rows="3" placeholder="사용자가 제공해야 하는 정보는 무엇인가요? (예: 주간 업무 데이터, 프로젝트 현황)"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="skill-output">출력 형식:</label>
+                    <textarea id="skill-output" rows="3" placeholder="어떤 형식의 결과물을 만들어야 하나요? (예: 마크다운 보고서, 3개 섹션으로 구성)"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="skill-rules">특별한 규칙이나 제약사항:</label>
+                    <textarea id="skill-rules" rows="3" placeholder="반드시 지켜야 할 규칙이나 피해야 할 것들을 알려주세요. (선택사항)"></textarea>
+                </div>
+
+                <button class="button" onclick="generateInstructions()">Instructions 생성하기</button>
+
+                <div class="result-box" id="inst-result">
+                    <h4>생성된 Instructions</h4>
+                    <div id="inst-content"></div>
+                    <button class="copy-button" onclick="copyInstructions()">📋 복사하기</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: 최종 검증 -->
+        <div class="tab-content" id="tab3">
+            <div class="agent-section">
+                <h2>✅ 최종 검증 에이전트</h2>
+
+                <div class="info-box">
+                    <p><strong>이 에이전트는 무엇을 하나요?</strong></p>
+                    <p>Description과 Instructions를 함께 분석하여 일관성, 완성도, 실용성을 종합적으로 검증합니다. 실전 투입 전 마지막 점검을 도와드립니다.</p>
+                </div>
+
+                <div class="input-group">
+                    <label for="final-desc">Description:</label>
+                    <textarea id="final-desc" rows="4" placeholder="검증할 Description을 입력해주세요"></textarea>
+                </div>
+
+                <div class="input-group">
+                    <label for="final-inst">Instructions (주요 내용):</label>
+                    <textarea id="final-inst" rows="8" placeholder="작성하신 Instructions의 주요 내용을 입력해주세요"></textarea>
+                </div>
+
+                <button class="button" onclick="validateSkill()">검증하기</button>
+
+                <div class="result-box" id="valid-result">
+                    <h4>검증 결과</h4>
+                    <div id="valid-score"></div>
+                    <div id="valid-feedback"></div>
+                    <div id="valid-checklist"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(index) {
+            const buttons = document.querySelectorAll('.tab-button');
+            const contents = document.querySelectorAll('.tab-content');
+
+            buttons.forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.add('active');
+                    contents[i].classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                    contents[i].classList.remove('active');
+                }
+            });
+        }
+
+        // Description 분석
+        function analyzeDescription() {
+            const input = document.getElementById('desc-input').value.trim();
+            const resultBox = document.getElementById('desc-result');
+            const scoreDiv = document.getElementById('desc-score');
+            const feedbackDiv = document.getElementById('desc-feedback');
+            const suggestionsDiv = document.getElementById('desc-suggestions');
+
+            if (!input) {
+                alert('Description을 입력해주세요!');
+                return;
+            }
+
+            // 분석 로직
+            const analysis = analyzeDescriptionText(input);
+
+            // 점수 표시
+            scoreDiv.innerHTML = `<div class="score ${analysis.scoreClass}">${analysis.score}/100점</div>`;
+
+            // 피드백 표시
+            let feedbackHTML = '<h4>구체적인 피드백:</h4>';
+            analysis.feedback.forEach(item => {
+                feedbackHTML += `
+                    <div class="feedback-item ${item.type}">
+                        <span class="icon">${item.icon}</span>
+                        <div>${item.text}</div>
+                    </div>
+                `;
+            });
+            feedbackDiv.innerHTML = feedbackHTML;
+
+            // 개선 제안
+            if (analysis.suggestions.length > 0) {
+                let suggestionsHTML = '<h4>개선 제안:</h4>';
+                analysis.suggestions.forEach(suggestion => {
+                    suggestionsHTML += `
+                        <div class="suggestion-box">
+                            <h5>💡 제안</h5>
+                            <p>${suggestion}</p>
+                        </div>
+                    `;
+                });
+                suggestionsDiv.innerHTML = suggestionsHTML;
+            }
+
+            resultBox.classList.add('show');
+        }
+
+        function analyzeDescriptionText(text) {
+            let score = 0;
+            const feedback = [];
+            const suggestions = [];
+
+            // 1. 길이 체크 (적절한 상세도)
+            if (text.length < 20) {
+                feedback.push({
+                    type: 'bad',
+                    icon: '❌',
+                    text: '너무 짧습니다. Description이 지나치게 간략하여 Claude가 언제 이 스킬을 사용해야 할지 판단하기 어렵습니다.'
+                });
+                suggestions.push('최소 50자 이상으로 구체적인 상황, 형식, 결과물을 설명해주세요.');
+            } else if (text.length < 50) {
+                feedback.push({
+                    type: 'warning',
+                    icon: '⚠️',
+                    text: '조금 더 상세한 설명이 필요합니다.'
+                });
+                score += 10;
+            } else {
+                feedback.push({
+                    type: 'good',
+                    icon: '✅',
+                    text: '적절한 길이입니다. 충분한 정보를 담고 있습니다.'
+                });
+                score += 25;
+            }
+
+            // 2. 구체적인 동사 사용 체크
+            const actionVerbs = ['작성', '생성', '분석', '변환', '정리', '추출', '검토', '비교', '요약'];
+            const hasActionVerb = actionVerbs.some(verb => text.includes(verb));
+            if (hasActionVerb) {
+                feedback.push({
+                    type: 'good',
+                    icon: '✅',
+                    text: '명확한 동작 동사를 사용하고 있습니다.'
+                });
+                score += 20;
+            } else {
+                feedback.push({
+                    type: 'warning',
+                    icon: '⚠️',
+                    text: '구체적인 동작 동사가 없습니다.'
+                });
+                suggestions.push('"작성", "생성", "분석" 등 명확한 동작을 나타내는 동사를 포함해주세요.');
+            }
+
+            // 3. 형식/구조 언급 체크
+            const formatKeywords = ['형식', '구조', '항목', '섹션', '단계', '구성', '순서'];
+            const hasFormat = formatKeywords.some(keyword => text.includes(keyword));
+            if (hasFormat) {
+                feedback.push({
+                    type: 'good',
+                    icon: '✅',
+                    text: '결과물의 형식이나 구조를 언급하고 있습니다.'
+                });
+                score += 20;
+            } else {
+                feedback.push({
+                    type: 'warning',
+                    icon: '⚠️',
+                    text: '결과물의 형식이나 구조에 대한 언급이 없습니다.'
+                });
+                suggestions.push('결과물이 어떤 형식이나 구조를 가져야 하는지 명시해주세요. (예: "3개 섹션으로 구성", "마크다운 형식")');
+            }
+
+            // 4. 모호한 표현 체크
+            const vagueWords = ['문서', '자료', '것', '좋은', '적절한', '효과적인'];
+            const vagueCount = vagueWords.filter(word => text.includes(word)).length;
+            if (vagueCount === 0) {
+                feedback.push({
+                    type: 'good',
+                    icon: '✅',
+                    text: '모호한 표현 없이 구체적으로 작성되었습니다.'
+                });
+                score += 20;
+            } else if (vagueCount <= 2) {
+                feedback.push({
+                    type: 'warning',
+                    icon: '⚠️',
+                    text: `모호한 표현이 ${vagueCount}개 포함되어 있습니다.`
+                });
+                score += 10;
+                suggestions.push('"문서", "자료", "좋은" 같은 일반적인 표현 대신 더 구체적인 단어를 사용해주세요.');
+            } else {
+                feedback.push({
+                    type: 'bad',
+                    icon: '❌',
+                    text: `모호한 표현이 너무 많습니다. (${vagueCount}개)`
+                });
+                suggestions.push('추상적이고 모호한 표현을 구체적인 용어로 바꿔주세요.');
+            }
+
+            // 5. 대상/상황 명시 체크
+            const contextKeywords = ['위한', '대한', '경우', '때', '시', '상황'];
+            const hasContext = contextKeywords.some(keyword => text.includes(keyword));
+            if (hasContext) {
+                feedback.push({
+                    type: 'good',
+                    icon: '✅',
+                    text: '사용 상황이나 대상이 명시되어 있습니다.'
+                });
+                score += 15;
+            } else {
+                feedback.push({
+                    type: 'warning',
+                    icon: '⚠️',
+                    text: '어떤 상황에서 사용해야 하는지 명확하지 않습니다.'
+                });
+                suggestions.push('이 스킬이 "언제", "어떤 상황에서" 사용되어야 하는지 명시해주세요.');
+            }
+
+            // 점수에 따른 클래스 결정
+            let scoreClass = 'bad';
+            if (score >= 70) scoreClass = 'good';
+            else if (score >= 40) scoreClass = 'warning';
+
+            return {
+                score,
+                scoreClass,
+                feedback,
+                suggestions
+            };
+        }
+
+        // Instructions 생성
+        function generateInstructions() {
+            const name = document.getElementById('skill-name').value.trim();
+            const purpose = document.getElementById('skill-purpose').value.trim();
+            const input = document.getElementById('skill-input').value.trim();
+            const output = document.getElementById('skill-output').value.trim();
+            const rules = document.getElementById('skill-rules').value.trim();
+
+            if (!name || !purpose || !input || !output) {
+                alert('필수 항목을 모두 입력해주세요! (특별한 규칙은 선택사항입니다)');
+                return;
+            }
+
+            const instructions = generateInstructionsText(name, purpose, input, output, rules);
+
+            const resultBox = document.getElementById('inst-result');
+            const contentDiv = document.getElementById('inst-content');
+
+            contentDiv.innerHTML = `<pre style="background: #f8f9fa; padding: 20px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; line-height: 1.6;">${instructions}</pre>`;
+
+            resultBox.classList.add('show');
+        }
+
+        function generateInstructionsText(name, purpose, input, output, rules) {
+            let instructions = `---
+name: ${name}
+description: ${purpose}
+version: 1.0.0
+---
+
+## 1. 개요
+이 스킬은 ${purpose}
+
+## 2. 사용 시점 (Activation Context)
+다음과 같은 요청을 받았을 때 이 스킬을 활성화하세요:
+- ${name}이/가 필요한 경우
+- 사용자가 관련 작업을 요청한 경우
+
+## 3. 입력 정보 (Input)
+사용자로부터 다음 정보를 받아야 합니다:
+${input.split('\n').map(line => `- ${line}`).join('\n')}
+
+## 4. 처리 절차 (Process)
+1. 사용자로부터 필요한 정보를 모두 확인합니다.
+2. 입력된 정보의 유효성을 검토합니다.
+3. 지정된 형식과 구조에 맞춰 결과물을 생성합니다.
+4. 생성된 결과물을 검토하고 필요시 수정합니다.
+
+## 5. 출력 형식 (Output)
+${output.split('\n').map(line => `- ${line}`).join('\n')}
+
+## 6. 품질 기준
+- 정확성: 입력된 정보를 정확하게 반영해야 합니다.
+- 일관성: 항상 동일한 형식과 구조를 유지해야 합니다.
+- 완성도: 누락된 정보 없이 완전한 결과물을 제공해야 합니다.
+${rules ? `
+## 7. 특별 규칙 및 제약사항
+${rules.split('\n').map(line => `- ${line}`).join('\n')}
+` : ''}
+## ${rules ? '8' : '7'}. 참고사항
+- 사용자가 추가 정보를 요청하면 명확하게 설명해주세요.
+- 결과물이 기대와 다를 경우 피드백을 받아 수정하세요.
+`;
+
+            return instructions;
+        }
+
+        function copyInstructions() {
+            const content = document.getElementById('inst-content').innerText;
+            navigator.clipboard.writeText(content).then(() => {
+                alert('Instructions가 클립보드에 복사되었습니다!');
+            });
+        }
+
+        // 최종 검증
+        function validateSkill() {
+            const desc = document.getElementById('final-desc').value.trim();
+            const inst = document.getElementById('final-inst').value.trim();
+
+            if (!desc || !inst) {
+                alert('Description과 Instructions를 모두 입력해주세요!');
+                return;
+            }
+
+            const validation = validateSkillContent(desc, inst);
+
+            const resultBox = document.getElementById('valid-result');
+            const scoreDiv = document.getElementById('valid-score');
+            const feedbackDiv = document.getElementById('valid-feedback');
+            const checklistDiv = document.getElementById('valid-checklist');
+
+            // 점수 표시
+            scoreDiv.innerHTML = `<div class="score ${validation.scoreClass}">${validation.score}/100점</div>`;
+
+            // 피드백 표시
+            let feedbackHTML = '<h4>종합 평가:</h4>';
+            validation.feedback.forEach(item => {
+                feedbackHTML += `
+                    <div class="feedback-item ${item.type}">
+                        <span class="icon">${item.icon}</span>
+                        <div><strong>${item.title}:</strong> ${item.text}</div>
+                    </div>
+                `;
+            });
+            feedbackDiv.innerHTML = feedbackHTML;
+
+            // 체크리스트
+            let checklistHTML = '<h4>최종 체크리스트:</h4>';
+            validation.checklist.forEach(item => {
+                checklistHTML += `
+                    <div class="feedback-item ${item.passed ? 'good' : 'bad'}">
+                        <span class="icon">${item.passed ? '✅' : '❌'}</span>
+                        <div>${item.text}</div>
+                    </div>
+                `;
+            });
+            checklistDiv.innerHTML = checklistHTML;
+
+            resultBox.classList.add('show');
+        }
+
+        function validateSkillContent(desc, inst) {
+            let score = 0;
+            const feedback = [];
+            const checklist = [];
+
+            // 1. Description과 Instructions의 일관성
+            const descWords = desc.toLowerCase().split(/\s+/);
+            const instWords = inst.toLowerCase().split(/\s+/);
+            const commonWords = descWords.filter(word => instWords.includes(word) && word.length > 3);
+            const consistency = (commonWords.length / Math.min(descWords.length, instWords.length)) * 100;
+
+            if (consistency > 30) {
+                feedback.push({
+                    type: 'good',
+                    icon: '✅',
+                    title: '일관성',
+                    text: 'Description과 Instructions가 일관된 내용을 담고 있습니다.'
+                });
+                score += 25;
+                checklist.push({ passed: true, text: 'Description과 Instructions의 일관성' });
+            } else {
+                feedback.push({
+                    type: 'warning',
+                    icon: '⚠️',
+                    title: '일관성',
+                    text: 'Description과 Instructions의 내용이 다소 동떨어져 보입니다. 같은 용어와 개념을 사용하고 있는지 확인해주세요.'
+                });
+                score += 10;
+                checklist.push({ passed: false, text: 'Description과 Instructions의 일관성' });
+            }
+
+            // 2. Instructions의 구조화 정도
+            const hasSections = inst.includes('##') || inst.includes('1.') || inst.includes('-');
+            if (hasSections) {
+                feedback.push({
+                    type: 'good',
+                    icon: '✅',
+                    title: '구조화',
+                    text: 'Instructions가 잘 구조화되어 있습니다.'
+                });
+                score += 20;
+                checklist.push({ passed: true, text: 'Instructions의 체계적인 구조' });
+            } else {
+                feedback.push({
+                    type: 'bad',
+                    icon: '❌',
+                    title: '구조화',
+                    text: 'Instructions를 섹션별로 나누어 구조화해주세요.'
+                });
+                checklist.push({ passed: false, text: 'Instructions의 체계적인 구조' });
+            }
+
+            // 3. 명확한 입력/출력 정의
+            const hasInputOutput = (inst.includes('입력') || inst.includes('Input')) &&
+                                   (inst.includes('출력') || inst.includes('Output'));
+            if (hasInputOutput) {
+                feedback.push({
+                    type: 'good',
+                    icon: '✅',
+                    title: '입출력 정의',
+                    text: '입력과 출력이 명확하게 정의되어 있습니다.'
+                });
+                score += 20;
+                checklist.push({ passed: true, text: '명확한 입력/출력 정의' });
+            } else {
+                feedback.push({
+                    type: 'warning',
+                    icon: '⚠️',
+                    title: '입출력 정의',
+                    text: '입력 정보와 출력 형식을 더 명확하게 정의해주세요.'
+                });
+                score += 5;
+                checklist.push({ passed: false, text: '명확한 입력/출력 정의' });
+            }
+
+            // 4. 실행 가능한 지침
+            const hasActionableSteps = inst.match(/\d+\./g) && inst.match(/\d+\./g).length >= 3;
+            if (hasActionableSteps) {
+                feedback.push({
+                    type: 'good',
+                    icon: '✅',
+                    title: '실행 가능성',
+                    text: '단계별 실행 지침이 포함되어 있습니다.'
+                });
+                score += 20;
+                checklist.push({ passed: true, text: '단계별 실행 가능한 지침' });
+            } else {
+                feedback.push({
+                    type: 'warning',
+                    icon: '⚠️',
+                    title: '실행 가능성',
+                    text: '더 구체적인 단계별 지침을 추가하면 좋습니다.'
+                });
+                score += 5;
+                checklist.push({ passed: false, text: '단계별 실행 가능한 지침' });
+            }
+
+            // 5. 충분한 상세도
+            if (inst.length > 200) {
+                feedback.push({
+                    type: 'good',
+                    icon: '✅',
+                    title: '상세도',
+                    text: '충분히 상세한 지침이 작성되어 있습니다.'
+                });
+                score += 15;
+                checklist.push({ passed: true, text: '충분한 상세도와 설명' });
+            } else {
+                feedback.push({
+                    type: 'warning',
+                    icon: '⚠️',
+                    title: '상세도',
+                    text: 'Instructions를 더 상세하게 작성하면 Claude가 더 정확하게 작동합니다.'
+                });
+                checklist.push({ passed: false, text: '충분한 상세도와 설명' });
+            }
+
+            // 점수에 따른 클래스 결정
+            let scoreClass = 'bad';
+            if (score >= 70) scoreClass = 'good';
+            else if (score >= 40) scoreClass = 'warning';
+
+            return {
+                score,
+                scoreClass,
+                feedback,
+                checklist
+            };
+        }
+    </script>
+</body>
+</html>
